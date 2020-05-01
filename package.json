@@ -1,0 +1,22 @@
+{
+  "name": "md2anki",
+  "version": "0.1.0",
+  "author": "Yenn Lou <yennlou21@gmail.com>",
+  "description": "a tool to generate anki decks from markdown",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yennlou/md2anki.git"
+  },
+  "homepage": "https://github.com/yennlou/md2anki#readme",
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@types/node": "^13.13.4",
+    "jest": "^25.5.3",
+    "prettier": "^2.0.5",
+    "ts-jest": "^25.4.0",
+    "typescript": "^3.8.3"
+  }
+}
