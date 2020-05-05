@@ -5,36 +5,38 @@ import html = require('rehype-stringify')
 import { MOCK_DATA } from './mock'
 import { Parent, Node } from 'unist'
 
-const mast = unified().use(markdown).parse(MOCK_DATA) as Parent
-const nodes = mast.children
+const isEnd = (node: Node) => node.type === 'end'
+const isHeading = (node: Node) => node.type === 'heading' && node.depth < 4
+const flushable = (buffer: Node[]) =>
+  buffer.length && buffer[buffer.length - 1].type !== 'heading'
 
-let buffer: Node[] = []
-let newTrees: Node[] = []
-
-const flushable = (buffer: Node[]) => {
-  if (buffer.length && buffer[buffer.length - 1].type !== 'heading') return true
-  return false
-}
-
-const flush = (buffer: Node[], newTrees) => {
-  newTrees.push({ type: 'root', children: [...buffer] })
-  buffer.length = 0
-}
-
-for (const node of nodes) {
-  if (node.type === 'heading' && node.depth < 4) {
-    if (flushable(buffer)) flush(buffer, newTrees)
+const reducer = (state: { buffer: Node[]; newTrees: Node[] }, node: Node) => {
+  if (isHeading(node) && flushable(state.buffer)) {
+    return {
+      newTrees: [
+        ...state.newTrees,
+        { type: 'root', children: [...state.buffer] }
+      ],
+      buffer: [node]
+    }
+  } else if (isEnd(node) && flushable(state.buffer)) {
+    return {
+      newTrees: [
+        ...state.newTrees,
+        { type: 'root', children: [...state.buffer] }
+      ],
+      buffer: []
+    }
   }
-  buffer.push(node)
+  return { ...state, buffer: [...state.buffer, node] }
 }
 
-if (flushable(buffer)) flush(buffer, newTrees)
+const mast = unified().use(markdown).parse(MOCK_DATA) as Parent
+const nodes = [...mast.children, { type: 'end' }]
+const { newTrees } = nodes.reduce(reducer, { buffer: [], newTrees: [] })
 
-newTrees.map((mast) => {
+newTrees.map((mast: Parent) => {
   const hast = unified().use(remark2rehype).runSync(mast)
   console.log(unified().use(html).stringify(hast))
   console.log('======')
 })
-
-// const hast = unified().use(remark2rehype).runSync(mast)
-// console.log(unified().use(html).stringify(hast))
